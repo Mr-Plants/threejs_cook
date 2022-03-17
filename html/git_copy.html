@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js webgl - GLTFloader + variants</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+<!-- Import maps polyfill -->
+<!-- Remove this when import maps will be widely supported -->
+<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+<script type="importmap">
+			{
+				"imports": {
+					"three": "../node_modules/three/build/three.module.js"
+				}
+			}
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+<script type="module">
+
+    import * as THREE from 'three';
+    import {OrbitControls} from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
+    import {GLTFLoader} from '../node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+    import {RGBELoader} from '../node_modules/three/examples/jsm/loaders/RGBELoader.js';
+
+    let camera, scene, renderer;
+    let mixer;
+    let controls;
+    const clock = new THREE.Clock();
+
+    const meters = {
+        "glass_light_TEM": {
+            "frontMaterial": {
+                "side": 0,
+                "transparent": true,
+                "roughness": 0.1,
+                "metalness": 0.2,
+                "transmission": 0.97,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#b8c3ff"
+            },
+            "backMaterial": {
+                "side": 1,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.71,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#b8c3ff"
+            }
+        },
+        "glass_mid3_TEM": {
+            "frontMaterial": {
+                "side": 0,
+                "transparent": true,
+                "roughness": 0.35,
+                "metalness": 0.2,
+                "transmission": 0.97,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#8a9dff"
+            },
+            "backMaterial": {
+                "side": 1,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.71,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#8a9dff"
+            }
+        },
+        "soft_dark3_TEM": {
+            "roughness": 0.21,
+            "metalness": 1,
+            "color": "#70a2ff",
+            "emissive": "#315cdd",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_mid1_TEM": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#8d99aa",
+            "emissive": "#7d88ba",
+            "opacity": 0.99,
+            "transparent": true
+        },
+        "soft_dark2_TEM": {
+            "roughness": 0.21,
+            "metalness": 1,
+            "color": "#70a2ff",
+            "emissive": "#315cdd",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light1_TEM": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light2_TEM": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "glass_mid4_TEM": {
+            "frontMaterial": {
+                "side": 0,
+                "transparent": true,
+                "roughness": 0.1,
+                "metalness": 0.2,
+                "transmission": 0.97,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#d6dcfa"
+            },
+            "backMaterial": {
+                "side": 1,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.71,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#d6dcfa"
+            }
+        },
+        "soft_light3_TEM": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light4_TEM": {
+            "roughness": 0.41,
+            "metalness": 0.71,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_mid2_TEM": {
+            "roughness": 0.25,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "glass_light1_TEM": {
+            "frontMaterial": {
+                "side": 0,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.97,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#98a0e1"
+            },
+            "backMaterial": {
+                "side": 1,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.71,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#98a0e1"
+            }
+        },
+
+        "soft_mid5_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#929cc3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_dark_default2": {
+            "roughness": 0.36,
+            "metalness": 1,
+            "color": "#70a2ff",
+            "emissive": "#315cdd",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light1_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#a2acd8",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light2_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_mid1_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#8d99aa",
+            "emissive": "#7d88ba",
+            "opacity": 0.99,
+            "transparent": true
+        },
+        "soft_mid2_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light3_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#8d99aa",
+            "emissive": "#7d88ba",
+            "opacity": 0.99,
+            "transparent": true
+        },
+        "soft_light4_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#7b83a3",
+            "opacity": 1,
+            "transparent": true
+        },
+        "soft_light5_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#8d99aa",
+            "emissive": "#7d88ba",
+            "opacity": 0.99,
+            "transparent": true
+        },
+        "soft_light6_default2": {
+            "roughness": 0.2,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#9ca5c9",
+            "opacity": 1,
+            "transparent": true
+        },
+        "glass_light_default2": {
+            "frontMaterial": {
+                "side": 0,
+                "transparent": true,
+                "roughness": 0.1,
+                "metalness": 0.2,
+                "transmission": 0.97,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#d6dcfa"
+            },
+            "backMaterial": {
+                "side": 1,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.71,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#d6dcfa"
+            }
+        },
+        "glass_mid2_default2": {
+            "frontMaterial": {
+                "side": 0,
+                "transparent": true,
+                "roughness": 0.1,
+                "metalness": 0.2,
+                "transmission": 0.97,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#f0f2ff"
+            },
+            "backMaterial": {
+                "side": 1,
+                "transparent": true,
+                "roughness": 0.01,
+                "metalness": 0.01,
+                "transmission": 0.71,
+                "reflectivity": 1,
+                "envMapIntensity": 2,
+                "color": "#f0f2ff"
+            }
+        },
+        "soft_light_default2": {
+            "roughness": 0.35,
+            "metalness": 1,
+            "color": "#c4cdd9",
+            "emissive": "#959fc6",
+            "opacity": 1,
+            "transparent": true
+        }
+    }
+
+    init();
+    render();
+
+    function init() {
+
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        scene = new THREE.Scene();
+        let point = new THREE.PointLight(0xffffff);
+        point.position.set(400, 200, 300); //点光源位置
+        scene.add(point); //点光源添加到场景中
+
+
+        /**
+         * 相机设置
+         */
+        let width = window.innerWidth; //窗口宽度
+        let height = window.innerHeight; //窗口高度
+        let k = width / height; //窗口宽高比
+        let s = 200; //三维场景显示范围控制系数，系数越大，显示的范围越大
+        //创建相机对象
+        camera = new THREE.OrthographicCamera(-s * k, s * k, s, -s, 1, 1000);
+        camera.position.set(200, 300, 200); //设置相机位置
+        camera.lookAt(scene.position); //设置相机方向(指向的场景对象)
+
+        // new RGBELoader()
+        //     .load('../3d_modules/studio.hdr', function (texture, textureData) {
+        //
+        //         console.log(texture)
+        //         console.log(textureData)
+                // texture.mapping = THREE.EquirectangularReflectionMapping;
+                // scene.background = texture;
+                // scene.environment = texture;
+
+
+                // const material = new THREE.MeshBasicMaterial( { map: texture } );
+                // const quad = new THREE.PlaneGeometry( 1.5 * textureData.width / textureData.height, 1.5 );
+                // const mesh = new THREE.Mesh( quad, material );
+                // scene.add( mesh );
+
+                // render();
+
+                const loader = new GLTFLoader()
+                loader.load('../3d_modules/4.glb', function (gltf) {
+                    console.log(gltf)
+
+                    mixer = new THREE.AnimationMixer(gltf.scene);
+                    mixer.clipAction(gltf.animations[0]).play();
+
+                    // scene.add(gltf.scene);
+                    let children = []
+                    gltf.scene.traverse(e => {
+                        if (e.isMesh) {
+                            if (e.name.indexOf("glass") > -1) {
+                                let a = new THREE.Group
+                                    , r = e.clone()
+                                    , i = meters[e.name];
+                                r.material = new THREE.MeshPhysicalMaterial(Object.assign({}, i.frontMaterial)),
+                                    r.material.color.convertSRGBToLinear(),
+                                    r.originalOpacity = e.material.opacity,
+                                    r.renderOrder = 2,
+                                    a.add(r);
+                                let s = e.clone();
+                                s.name = s.name + "copy",
+                                    s.material = new THREE.MeshPhysicalMaterial(Object.assign({}, i.backMaterial)),
+                                    s.material.color.convertSRGBToLinear(),
+                                    s.originalOpacity = e.material.opacity,
+                                    s.renderOrder = 1,
+                                    a.add(s),
+                                    children.push(a)
+                            }
+                            if (e.name.indexOf("soft") > -1) {
+                                let c = new THREE.MeshStandardMaterial(Object.assign({}, meters[e.name]));
+                                e.material = c,
+                                    e.material.color.convertSRGBToLinear(),
+                                    e.material.emissive.convertSRGBToLinear(),
+                                    e.originalOpacity = e.material.opacity,
+                                    children.push(e)
+                            } else
+                                e.name.indexOf("glass") < 0 && (e.originalOpacity = e.material.opacity,
+                                    e.material.color.convertSRGBToLinear(),
+                                    e.material.envMapIntensity = 1,
+                                    children.push(e))
+                        }
+                    })
+
+                    let p = new THREE.Group;
+                    p.name = "rotate_group";
+                    children.forEach((function (e) {
+                            p.add(e)
+                        }
+                    ))
+
+                    scene.add(p)
+
+
+                    animate();
+
+                });
+
+            // });
+
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(16777215, 0);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        container.appendChild(renderer.domElement);
+
+        controls = new OrbitControls(camera, renderer.domElement);
+        controls.addEventListener('change', render); // use if there is no animation loop
+
+        window.addEventListener('resize', onWindowResize);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        mixer.update(delta);
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        render();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+
+</script>
+
+</body>
+</html>

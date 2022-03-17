@@ -72,14 +72,24 @@
         renderer.render(scene, camera);
     }
 
-    new RGBELoader().load('../3d_modules/studio.hdr', function (texture) {
-        console.log(texture)
 
-        const envMap = pmr.fromEquirectangular(texture).texture
-        pmr.dispose();
-        texture.dispose()
-        scene.environment = envMap;
-        scene.background = envMap;
+    new RGBELoader().load('../3d_modules/studio.hdr', function (texture,textureData) {
+        console.log( texture );
+        console.log( textureData );
+
+        const material = new THREE.MeshBasicMaterial( { map: texture } );
+
+        const quad = new THREE.PlaneGeometry( 1.5 * textureData.width / textureData.height, 1.5 );
+
+        const mesh = new THREE.Mesh( quad, material );
+
+        scene.add( mesh );
+
+        // const envMap = pmr.fromEquirectangular(texture).texture
+        // pmr.dispose();
+        // texture.dispose()
+        // scene.environment = envMap;
+        // scene.background = envMap;
         render();
 
         // model
